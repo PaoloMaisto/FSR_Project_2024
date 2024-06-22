@@ -17,8 +17,8 @@ imshow(map_straight_with_roundabout);
 hold on;
 
 % Plotting the start and goal points on the map
-plot(q_start(2), q_start(1), 'ro', 'MarkerSize', 10); % Start point (red)
-plot(q_goal(2), q_goal(1), 'bo', 'MarkerSize', 10); % Goal point (blue)
+plot(q_start(2), q_start(1), 'ro', 'MarkerSize', 10, 'LineWidth',2); % Start point (red)
+plot(q_goal(2), q_goal(1), 'bo', 'MarkerSize', 10, 'LineWidth',2); % Goal point (blue)
 
 %% PRM Algorithm Implementation with BFS
 
@@ -28,7 +28,7 @@ max_attempts = 5; % Maximum number of attempts
 delta = 10; % Connection threshold
 
 % PRM parameters
-num_samples = 200; % Number of samples (nodes) to generate
+num_samples = 300; % Number of samples (nodes) to generate
 max_dist = 30; % Maximum distance for connections
 min_dist = 15;
 
@@ -44,7 +44,7 @@ for attempt = 1:max_attempts
     imshow(map_straight_with_roundabout);
     hold on;
     plot(q_start(2), q_start(1), 'ro', 'MarkerSize', 10, 'LineWidth',2); % Start point (red)
-    plot(q_goal(2), q_goal(1), 'bo', 'MarkerSize', 10,'LineWidth',2); % Goal point (blue)
+    plot(q_goal(2), q_goal(1), 'bo', 'MarkerSize', 10, 'LineWidth',2); % Goal point (blue)
     
     % Initialization of the nodes (samples) and adjacency matrix
     nodes = rand(num_samples, 2) .* [size(map_straight_with_roundabout, 1), size(map_straight_with_roundabout, 2)];
@@ -91,6 +91,14 @@ for attempt = 1:max_attempts
             optimal_path = reconstructPath(parent, current);
             % Plot the optimal path
             plotPath(optimal_path, nodes, 'r');
+            
+            % Interpolate the path using splines
+            pathNodes = nodes(optimal_path, :);
+            smoothPath = interpolateReddSheeps(pathNodes, 5);
+            
+            % Plot the smoothed path
+            plot(smoothPath(:,2), smoothPath(:,1), 'g', 'LineWidth', 2);
+            
             disp(['Optimal path found at the Attempt number: ', num2str(attempt)]);
             solution_found = true;
             break;
@@ -133,4 +141,15 @@ function plotPath(path, nodes, color)
     for i = 1:length(path)-1
         line([nodes(path(i),2), nodes(path(i+1),2)], [nodes(path(i),1), nodes(path(i+1),1)], 'Color', color, 'LineWidth', 2);
     end
+end
+
+function smoothPath = interpolateReddSheeps(pathNodes, resolution)
+    % Interpola la traiettoria utilizzando spline cubiche
+    t = 1:size(pathNodes, 1);
+    ts = linspace(1, size(pathNodes, 1), resolution * size(pathNodes, 1));
+    
+    x_spline = spline(t, pathNodes(:, 1), ts);
+    y_spline = spline(t, pathNodes(:, 2), ts);
+    
+    smoothPath = [x_spline', y_spline'];
 end
